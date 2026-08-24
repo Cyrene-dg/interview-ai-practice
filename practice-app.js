@@ -19,10 +19,11 @@
     const course = courseByKey(params.get('course'));
     const category = course.categories.some(item => item.name === params.get('category')) ? params.get('category') : course.categories[0]?.name;
     const records = readRecords(); let search = '', type = 'all', status = 'all', page = Math.max(1, Number(params.get('page')) || 1);
-    const courseList = document.querySelector('#courseList'), categoryList = document.querySelector('#categoryList'), typeFilter = document.querySelector('#typeFilter'), statusFilter = document.querySelector('#statusFilter'), questionList = document.querySelector('#questionList'), pager = document.querySelector('#pager');
+    const courseList = document.querySelector('#courseList'), categoryList = document.querySelector('#categoryList'), mobileCourseList = document.querySelector('#mobileCourseList'), mobileCategoryList = document.querySelector('#mobileCategoryList'), mobileDirectory = document.querySelector('#mobileDirectory'), typeFilter = document.querySelector('#typeFilter'), statusFilter = document.querySelector('#statusFilter'), questionList = document.querySelector('#questionList'), pager = document.querySelector('#pager');
     const selectedQuestions = categoryQuestions(course, category), types = [...new Set(selectedQuestions.map(q => q.type))];
-    courseList.innerHTML = bank.courses.map(item => `<button class="side-button ${item.key === course.key ? 'active' : ''}" data-course="${escapeHtml(item.key)}"><span>${escapeHtml(item.name)}</span><em>${item.categories.reduce((sum, c) => sum + c.count, 0)}</em></button>`).join('');
-    categoryList.innerHTML = course.categories.map(item => `<button class="side-button category ${item.name === category ? 'active' : ''}" data-category="${escapeHtml(item.name)}"><span>${escapeHtml(item.name)}</span><em>${item.count}</em></button>`).join('');
+    const courseButtons = bank.courses.map(item => `<button class="side-button ${item.key === course.key ? 'active' : ''}" data-course="${escapeHtml(item.key)}"><span>${escapeHtml(item.name)}</span><em>${item.categories.reduce((sum, c) => sum + c.count, 0)}</em></button>`).join('');
+    const categoryButtons = course.categories.map(item => `<button class="side-button category ${item.name === category ? 'active' : ''}" data-category="${escapeHtml(item.name)}"><span>${escapeHtml(item.name)}</span><em>${item.count}</em></button>`).join('');
+    courseList.innerHTML = courseButtons; categoryList.innerHTML = categoryButtons; mobileCourseList.innerHTML = courseButtons; mobileCategoryList.innerHTML = categoryButtons;
     typeFilter.innerHTML = `<option value="all">全部题型</option>${types.map(item => `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`).join('')}`;
     document.querySelector('#crumb').innerHTML = `<span>${escapeHtml(course.name)}</span><i>/</i><span>${escapeHtml(category)}</span>`;
     document.querySelector('#catalogTitle').textContent = `${category} 题库`;
@@ -37,8 +38,11 @@
       pager.innerHTML = `<span>共 ${rows.length} 题，第 ${page} / ${totalPages} 页</span><button data-page="${page - 1}" ${page === 1 ? 'disabled' : ''}>上一页</button>${Array.from({length:last-first+1},(_,i)=>first+i).map(n=>`<button class="${n === page ? 'current' : ''}" data-page="${n}">${n}</button>`).join('')}<button data-page="${page + 1}" ${page === totalPages ? 'disabled' : ''}>下一页</button>`;
       pager.querySelectorAll('button[data-page]').forEach(button => button.onclick = () => { page = Number(button.dataset.page); drawList(); window.scrollTo({top:0,behavior:'smooth'}); });
     }
-    courseList.querySelectorAll('[data-course]').forEach(button => button.onclick = () => { const nextCourse = courseByKey(button.dataset.course); setUrl({course:nextCourse.key,category:nextCourse.categories[0]?.name || '',page:1}); location.reload(); });
-    categoryList.querySelectorAll('[data-category]').forEach(button => button.onclick = () => { setUrl({course:course.key,category:button.dataset.category,page:1}); location.reload(); });
+    [courseList, mobileCourseList].forEach(list => list.querySelectorAll('[data-course]').forEach(button => button.onclick = () => { const nextCourse = courseByKey(button.dataset.course); setUrl({course:nextCourse.key,category:nextCourse.categories[0]?.name || '',page:1}); location.reload(); }));
+    [categoryList, mobileCategoryList].forEach(list => list.querySelectorAll('[data-category]').forEach(button => button.onclick = () => { setUrl({course:course.key,category:button.dataset.category,page:1}); location.reload(); }));
+    document.querySelector('#openMobileDirectory').onclick = () => { mobileDirectory.hidden = false; document.body.classList.add('drawer-open'); };
+    document.querySelector('#closeMobileDirectory').onclick = () => { mobileDirectory.hidden = true; document.body.classList.remove('drawer-open'); };
+    mobileDirectory.onclick = event => { if (event.target === mobileDirectory) { mobileDirectory.hidden = true; document.body.classList.remove('drawer-open'); } };
     document.querySelector('#searchInput').oninput = event => { search = event.target.value; page = 1; drawList(); };
     typeFilter.onchange = event => { type = event.target.value; page = 1; drawList(); }; statusFilter.onchange = event => { status = event.target.value; page = 1; drawList(); }; drawList();
   }

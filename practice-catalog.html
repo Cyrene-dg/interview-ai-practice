@@ -5,13 +5,37 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>题库目录 · InterviewAI</title>
   <link rel="stylesheet" href="practice-style.css">
+  <style>
+    .mobile-directory-button,.mobile-directory-overlay{display:none}
+    @media(max-width:800px){
+      body.drawer-open{overflow:hidden}
+      .mobile-directory-button{display:inline-flex;align-items:center;gap:5px;padding:8px 11px;border:0;border-radius:9px;background:#efedff;color:#635bdf;font-weight:900}
+    .mobile-directory-overlay{display:block;position:fixed;inset:0;z-index:20;background:#19213766}
+      .mobile-directory-overlay[hidden]{display:none}
+      .mobile-directory-drawer{width:min(330px,85vw);height:100%;padding:19px 12px;overflow-y:auto;background:#fff;box-shadow:15px 0 38px #17203933}
+      .drawer-head{display:flex;align-items:center;justify-content:space-between;margin:0 8px 18px}
+      .drawer-head strong{font-size:20px}
+      .drawer-head button{display:grid;place-items:center;width:34px;height:34px;border:0;border-radius:9px;background:#f0f2f7;color:#4d5b70;font-size:24px;line-height:1}
+    }
+  </style>
 </head>
 <body data-page="catalog">
   <div class="shell">
     <header class="top">
       <a class="brand" href="practice-catalog.html">Interview<span>AI</span></a>
+      <button id="openMobileDirectory" class="mobile-directory-button" type="button">☰ 题库目录</button>
       <div class="top-note">个人刷题库 <span id="totalCount"></span></div>
     </header>
+    <div id="mobileDirectory" class="mobile-directory-overlay" hidden>
+      <aside class="mobile-directory-drawer" aria-label="手机题库目录">
+        <div class="drawer-head"><strong>题库目录</strong><button id="closeMobileDirectory" type="button" aria-label="关闭目录">×</button></div>
+        <div class="side-title">题库</div>
+        <div id="mobileCourseList" class="course-list"></div>
+        <div class="side-divider"></div>
+        <div class="side-title">分类</div>
+        <div id="mobileCategoryList" class="category-list"></div>
+      </aside>
+    </div>
     <main class="catalog-layout">
       <aside class="sidebar" aria-label="题库分类">
         <div class="side-title">题库</div>
