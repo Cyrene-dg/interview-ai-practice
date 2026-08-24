@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>题库目录 · InterviewAI</title>
+  <link rel="stylesheet" href="practice-style.css">
+</head>
+<body data-page="catalog">
+  <div class="shell">
+    <header class="top">
+      <a class="brand" href="practice-catalog.html">Interview<span>AI</span></a>
+      <div class="top-note">个人刷题库 <span id="totalCount"></span></div>
+    </header>
+    <main class="catalog-layout">
+      <aside class="sidebar" aria-label="题库分类">
+        <div class="side-title">题库</div>
+        <div id="courseList" class="course-list"></div>
+        <div class="side-divider"></div>
+        <div class="side-title">分类</div>
+        <div id="categoryList" class="category-list"></div>
+      </aside>
+      <section class="content-card">
+        <div class="catalog-head">
+          <div>
+            <div id="crumb" class="crumb"></div>
+            <h1 id="catalogTitle">题库目录</h1>
+            <p id="catalogSummary" class="muted"></p>
+          </div>
+          <div id="progressSummary" class="progress-summary"></div>
+        </div>
+        <div class="filters">
+          <label class="search-box"><span>⌕</span><input id="searchInput" placeholder="搜索题目标题或内容"></label>
+          <select id="typeFilter" aria-label="按题型筛选"></select>
+          <select id="statusFilter" aria-label="按完成状态筛选">
+            <option value="all">全部状态</option><option value="unmade">未做</option><option value="correct">答对</option><option value="wrong">答错</option><option value="mastered">已掌握</option><option value="unmastered">待复习</option>
+          </select>
+        </div>
+        <div class="question-table-head"><span>题号</span><span>题目名称</span><span>题型</span><span>状态</span></div>
+        <div id="questionList" class="question-list"></div>
+        <div id="pager" class="pager"></div>
+      </section>
+    </main>
+  </div>
+  <script src="practice-bank.js"></script><script src="practice-app.js"></script>
+</body>
+</html>
