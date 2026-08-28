@@ -9,9 +9,10 @@
 </head>
 <body data-page="practice">
   <div class="shell">
-    <header class="top"><a class="brand" href="practice-catalog.html">Interview<span>AI</span></a><a id="backToCatalog" class="top-back" href="practice-catalog.html">← 返回目录</a></header>
+    <header class="top"><a class="brand" href="practice-catalog.html">Interview<span>AI</span></a><div class="practice-top-actions"><a id="backToCatalog" class="top-back" href="practice-catalog.html">← 返回目录</a><button id="openQuestionNav" class="mobile-question-nav" type="button">☰ 题号</button></div></header>
+    <div id="questionNavDrawer" class="mobile-directory-overlay" hidden><aside class="mobile-directory-drawer mobile-question-drawer" aria-label="手机题号导航"><div class="drawer-head"><strong>题号导航</strong><button id="closeQuestionNav" type="button" aria-label="关闭题号导航">×</button></div><div id="mobilePracticeNav" class="practice-nav"></div></aside></div>
     <main class="practice-layout"><aside id="practiceNav" class="practice-nav" aria-label="题号导航"></aside><section id="practiceApp" class="practice-card"></section></main>
   </div>
-  <script src="practice-bank.js"></script><script src="practice-app.js"></script>
+  <script src="practice-bank.js"></script><script src="practice-note-store.js"></script><script src="practice-markdown.js"></script><script src="practice-app.js"></script>
 </body>
 </html>
