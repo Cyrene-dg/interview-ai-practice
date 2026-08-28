@@ -1,11 +1,24 @@
 (() => {
   const bank = window.PRACTICE_BANK;
   if (!bank || !Array.isArray(bank.questions)) { document.body.innerHTML = '<p style="padding:30px">题库数据没有加载成功。</p>'; return; }
-  const PAGE_SIZE = 20, NAV_SIZE = 30, storageKey = `interview-ai-practice-records-${bank.version}`;
+  // 做题进度不与题库版本绑定：以后新增题目时，旧题的本地记录仍然保留。
+  const PAGE_SIZE = 20, NAV_SIZE = 30, storageKey = 'interview-ai-practice-records-v1', legacyStoragePrefix = 'interview-ai-practice-records-';
   const params = new URLSearchParams(location.search);
   const escapeHtml = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
   const lineBreaks = value => escapeHtml(value).replace(/\n/g, '<br>');
-  const readRecords = () => { try { return JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch (_) { return {}; } };
+  const readJson = key => { try { const value = JSON.parse(localStorage.getItem(key) || '{}'); return value && typeof value === 'object' ? value : {}; } catch (_) { return {}; } };
+  const readRecords = () => {
+    const saved = readJson(storageKey);
+    if (Object.keys(saved).length) return saved;
+    // 兼容旧版“按题库版本分开保存”的进度；首次访问新版本时自动合并迁移。
+    const migrated = {};
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (key && key.startsWith(legacyStoragePrefix) && key !== storageKey) Object.assign(migrated, readJson(key));
+    }
+    if (Object.keys(migrated).length) localStorage.setItem(storageKey, JSON.stringify(migrated));
+    return migrated;
+  };
   const saveRecords = records => localStorage.setItem(storageKey, JSON.stringify(records));
   const statusText = record => !record ? '未做' : ({ correct:'答对', wrong:'答错', mastered:'已掌握', unmastered:'待复习' }[record.status] || '未做');
   const isChoice = q => Object.keys(q.options || {}).length > 0 && q.answerKeys?.length > 0;
