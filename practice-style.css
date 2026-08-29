@@ -154,6 +154,13 @@ button,input,select,textarea{font:inherit}
 
 .question-head h1{margin:8px 0 0;font-size:21px;line-height:1.58;letter-spacing:-.2px}
 
+/* 精修题目的源码与终端文本：使用明确的白名单，不对普通题目做猜测性拆分。 */
+.code-card{margin:20px 0 2px;border:1px solid #252d3c;border-radius:12px;background:#1e2430;overflow:hidden;box-shadow:0 7px 20px #16203822;color:#e8edf7;text-align:left}
+.code-card figcaption{display:flex;align-items:center;gap:8px;min-height:40px;padding:0 11px;border-bottom:1px solid #30394a;background:#242c3a;color:#aebbd0;font-size:12px}
+.code-language{padding:3px 8px;border-radius:6px;background:#3d4d70;color:#e9efff;font-weight:900;letter-spacing:.15px}.code-sql .code-language{background:#5945a6}.code-c .code-language{background:#206b67}.code-terminal .code-language{background:#455468}
+.code-caption{color:#8794aa}.copy-code{margin-left:auto;padding:5px 8px;border:1px solid #44516a;border-radius:7px;background:#2b3444;color:#d8e1ef;font-size:12px;font-weight:800;cursor:pointer}.copy-code:hover{background:#37445a}
+.code-scroll{overflow-x:auto;padding:10px 0 12px}.code-lines{min-width:max-content;margin:0;padding:0 14px 0 48px;color:#90a0ba;font:13px/1.72 ui-monospace,SFMono-Regular,Consolas,"Cascadia Code","Microsoft YaHei",monospace;tab-size:2}.code-lines li{min-height:1.72em;padding-left:11px;white-space:pre}.code-lines li::marker{color:#68778f;text-align:right}.code-lines code{color:#e8edf7;font:inherit}.token-keyword{color:#c792ea}.token-string{color:#c3e88d}.token-comment{color:#728198;font-style:italic}.token-number{color:#f6c177}.code-terminal .code-lines code{color:#c9d9ea}.code-terminal .code-lines{font-size:12.5px}
+
 .options{padding:17px 33px}
 
 .option{display:flex;align-items:flex-start;gap:13px;width:100%;margin:10px 0;padding:14px 15px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);text-align:left;cursor:pointer;transition:.15s}
@@ -235,6 +242,8 @@ button,input,select,textarea{font:inherit}
 .question-head,.options,.subjective-box{padding-left:18px;padding-right:18px}
 
 .question-head h1{font-size:19px}
+
+.code-card{margin-top:16px;border-radius:10px}.code-card figcaption{min-height:38px}.code-caption{display:none}.code-scroll{padding-top:8px}.code-lines{padding-left:42px;font-size:12px;line-height:1.68}.code-lines li{padding-left:8px;min-height:1.68em}.code-terminal .code-lines{font-size:11.5px}
 
 .answer-box{margin-left:18px;margin-right:18px}
 
