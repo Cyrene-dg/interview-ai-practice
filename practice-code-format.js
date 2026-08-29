@@ -48,6 +48,49 @@
     }
     return result + escape(line.slice(index));
   }
+  function codeWithoutStrings(line) {
+    let result = '', quote = '', escaped = false;
+    for (let index = 0; index < line.length; index += 1) {
+      const char = line[index];
+      if (quote) {
+        if (escaped) escaped = false;
+        else if (char === '\\') escaped = true;
+        else if (char === quote) quote = '';
+        continue;
+      }
+      if (char === '"' || char === "'") { quote = char; continue; }
+      if (char === '/' && line[index + 1] === '/') break;
+      result += char;
+    }
+    return result;
+  }
+  function normalizeStructuredLine(line) {
+    return line.trim()
+      .replace(/}\s*(catch|finally|else)\b/g, '} $1')
+      .replace(/\b(if|for|while|switch|catch)\s*\(/g, '$1 (')
+      .replace(/\b(try|finally|else|do)\s*\{/g, '$1 {')
+      .replace(/\)\s*\{/g, ') {')
+      .replace(/\s+;/g, ';');
+  }
+  function formatStructuredCode(code) {
+    const prepared = [];
+    for (const rawLine of code.split('\n')) {
+      const line = normalizeStructuredLine(rawLine);
+      if (line === '{' && prepared.length && prepared[prepared.length - 1].trim() && !prepared[prepared.length - 1].trim().endsWith('{')) {
+        prepared[prepared.length - 1] = `${prepared[prepared.length - 1].trimEnd()} {`;
+      } else prepared.push(line);
+    }
+    let level = 0;
+    return prepared.map(line => {
+      if (!line) return '';
+      const structure = codeWithoutStrings(line);
+      const opens = (structure.match(/{/g) || []).length;
+      const closes = (structure.match(/}/g) || []).length;
+      const indentation = Math.max(0, level - (structure.trimStart().startsWith('}') ? 1 : 0));
+      level = Math.max(0, level + opens - closes);
+      return `${'  '.repeat(indentation)}${line}`;
+    });
+  }
   function format(question, escape) {
     const spec = specs[question.id];
     if (!spec) return null;
@@ -62,7 +105,8 @@
     const prompt = [source.slice(0, startIndex).trim(), suffix].filter(Boolean).join(' ');
     const code = source.slice(startIndex, endIndex).trim();
     if (!code) return null;
-    const lineHtml = code.split('\n').map(line => `<li><code>${highlighted(line, spec.language, escape) || ' '}</code></li>`).join('');
+    const lines = ['java', 'c'].includes(spec.language) ? formatStructuredCode(code) : code.split('\n');
+    const lineHtml = lines.map(line => `<li><code>${highlighted(line, spec.language, escape) || ' '}</code></li>`).join('');
     return { prompt, html: `<figure class="code-card code-${spec.language}"><figcaption><span class="code-language">${labels[spec.language]}</span><span class="code-caption">题目代码</span><button class="copy-code" type="button">复制代码</button></figcaption><div class="code-scroll"><ol class="code-lines">${lineHtml}</ol></div></figure>` };
   }
   window.PRACTICE_CODE_FORMAT = { format, specs };
