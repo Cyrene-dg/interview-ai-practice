@@ -21,6 +21,12 @@
     list.innerHTML = shown.length ? shown.map(note => `<a class="note-list-item" href="practice.html?q=${encodeURIComponent(note.questionId)}"><div class="note-list-meta"><span>${escapeHtml(note.source)} / ${escapeHtml(note.category)}</span><b>第 ${escapeHtml(note.number)} 题</b></div><h2>${escapeHtml(note.title)}</h2>${note.summary ? `<div class="note-summary-preview">${escapeHtml(note.summary)}</div>` : ''}<p>${escapeHtml(note.personal || note.ai || '已记录笔记')}</p><small>更新于 ${new Date(note.updatedAt).toLocaleString('zh-CN', { hour12: false })} · 点击回到题目</small></a>`).join('') : '<div class="empty">还没有笔记。刷题时在解析下方写下第一条吧。</div>';
   }
   async function load() { allNotes = await notes.all(); draw(); }
+  let syncReloadTimer;
+  // 同步模块在页面加载后把远端笔记合并进 IndexedDB；合并结束后重新读取列表。
+  window.addEventListener('practice:notes-merged', () => {
+    clearTimeout(syncReloadTimer);
+    syncReloadTimer = setTimeout(load, 80);
+  });
   document.querySelector('#exportJson').onclick = async () => {
     const value = await notes.all();
     download(fileName('.json'), JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), notes: value }, null, 2), 'application/json;charset=utf-8');
