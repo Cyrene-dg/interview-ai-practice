@@ -1,0 +1,25 @@
+rules_version = '2';
+
+// InterviewAI 的跨设备同步规则。
+// 每条内容在浏览器端经恢复密钥加密后才会写入云端；匿名登录只用于拒绝未接入应用的请求。
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /syncVaults/{vaultId}/items/{itemId} {
+      // 设备必须先通过 Firebase 匿名登录；vaultId 本身由恢复密钥哈希得出。
+      allow get, list: if request.auth != null;
+
+      // 只接受前端同步协议需要的加密数据，不开放删除操作。
+      allow create, update: if request.auth != null
+        && request.resource.data.keys().hasOnly(['kind', 'version', 'updatedAt', 'iv', 'data'])
+        && request.resource.data.keys().hasAll(['kind', 'version', 'updatedAt', 'iv', 'data'])
+        && request.resource.data.kind in ['record', 'note']
+        && request.resource.data.version == 1
+        && request.resource.data.updatedAt is int
+        && request.resource.data.iv is string
+        && request.resource.data.data is string
+        && request.resource.data.iv.size() >= 16
+        && request.resource.data.data.size() >= 16
+        && request.resource.data.data.size() <= 200000;
+    }
+  }
+}

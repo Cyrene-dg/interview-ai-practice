@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>跨设备同步 · InterviewAI</title>
+  <link rel="stylesheet" href="practice-style.css?v=20260828-3">
+</head>
+<body>
+  <div class="shell notes-shell">
+    <header class="top"><a class="brand" href="practice-catalog.html">Interview<span>AI</span></a><a class="top-back" href="practice-catalog.html">← 返回题库</a></header>
+    <main class="sync-card">
+      <div class="sync-hero"><div class="crumb"><span>个人刷题库</span><i>/</i><span>跨设备同步</span></div><h1>把进度和笔记带到另一台设备</h1><p>不用登录账号。电脑和手机用同一把恢复密钥，就会同步刷题记录和 Markdown 笔记。</p></div>
+      <section id="syncDisabled" class="sync-panel">
+        <h2>首次开启同步</h2>
+        <p>会在这台设备生成一把专属恢复密钥。请立即保存；密钥丢失后，云端内容无法找回。</p>
+        <button id="createSync" class="primary" type="button">开启新的跨设备同步</button>
+      </section>
+      <section id="syncConnecting" class="sync-panel" hidden><h2>正在连接…</h2><p>正在安全地读取你的同步内容，请稍候。</p></section>
+      <section id="syncEnabled" class="sync-panel" hidden>
+        <div class="sync-status-line"><div><h2>同步已开启</h2><p id="syncStatusText">正在连接云端…</p></div><span id="syncBadge" class="sync-badge">准备中</span></div>
+        <div class="sync-actions"><button id="syncNow" class="secondary" type="button">立即同步</button><button id="showPairing" class="secondary" type="button">连接手机 / 另一台设备</button><button id="disconnectSync" class="text-danger" type="button">仅断开这台设备</button></div>
+        <div id="pairingPanel" class="pairing-panel" hidden>
+          <h3>连接另一台设备</h3>
+          <p>在手机打开本网站后，点“跨设备同步”，用相机扫下面的二维码；也可以复制恢复密钥并在另一台设备粘贴。</p>
+          <div class="pairing-content"><div id="pairQr" class="pair-qr" aria-label="同步配对二维码"></div><div class="pairing-copy"><label>恢复密钥<input id="recoveryKey" readonly></label><button id="copyRecoveryKey" class="secondary" type="button">复制恢复密钥</button><button id="downloadRecoveryKey" class="secondary" type="button">下载恢复密钥</button></div></div>
+          <p class="sync-warning">不要把恢复密钥或二维码发给别人；拿到它的人可以读取并修改你的加密同步内容。</p>
+        </div>
+      </section>
+      <section id="joinPanel" class="sync-panel join-panel" hidden>
+        <h2>检测到另一台设备的同步密钥</h2><p>确认后会把本设备接入同一个刷题库。发生冲突时，较新的记录或笔记字段会保留。</p><label>恢复密钥<input id="joinRecoveryKey" autocomplete="off" spellcheck="false"></label><div class="sync-actions"><button id="joinSync" class="primary" type="button">接入此同步库</button><button id="cancelJoin" class="secondary" type="button">暂不接入</button></div></section>
+      <section class="sync-explain"><h2>同步了什么？</h2><ul><li>答题状态、所选答案、主观题草稿</li><li>一句话复习结论、我的理解、AI 辅助解析</li><li>同步内容先在浏览器里加密，云端保存的是加密后的内容</li></ul><p>离线时仍会正常使用本地数据；联网后可手动点击“立即同步”。</p></section>
+    </main>
+  </div>
+  <script src="practice-note-store.js?v=20260828-3"></script>
+  <script src="practice-firebase-config.js?v=20260828-3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script type="module" src="practice-sync.js?v=20260828-3"></script>
+  <script type="module" src="practice-sync-page.js?v=20260828-3"></script>
+</body>
+</html>

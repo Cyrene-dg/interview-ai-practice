@@ -69,7 +69,7 @@
     const go = nextQuestion => { location.href = `practice.html?q=${encodeURIComponent(nextQuestion.id)}`; };
     const sameKeys = (one, other) => one.length === other.length && one.every(key => other.includes(key));
     const recordFor = () => readRecords()[question.id];
-    const store = (state, answer = '') => { const records = readRecords(); records[question.id] = {status:state,answer,updatedAt:Date.now()}; saveRecords(records); };
+    const store = (state, answer = '') => { const records = readRecords(); records[question.id] = {status:state,answer,updatedAt:Date.now()}; saveRecords(records); window.PRACTICE_SYNC?.notifyRecord?.(question.id, records[question.id]); };
     function drawNav() {
       const records = readRecords(), navStart = navPage * NAV_SIZE, visible = siblings.slice(navStart, navStart + NAV_SIZE);
       const markup = `<div class="nav-top"><span class="tag">${escapeHtml(question.source)} / ${escapeHtml(question.category)}</span><h3>题号导航</h3><p>第 ${currentIndex + 1} / ${siblings.length} 题</p><form class="jump-form"><input inputmode="numeric" placeholder="题号"><button>跳转</button></form></div><div class="nav-grid">${visible.map(item => {const state=records[item.id]?.status||'';return `<button class="nav-item ${item.id === question.id ? 'current' : ''} ${state}" data-id="${escapeHtml(item.id)}">${escapeHtml(item.number)}</button>`;}).join('')}</div><div class="nav-pages"><button class="nav-previous" ${navPage === 0 ? 'disabled' : ''}>‹</button><span>${navPage + 1} / ${Math.ceil(siblings.length / NAV_SIZE)}</span><button class="nav-next" ${navStart + NAV_SIZE >= siblings.length ? 'disabled' : ''}>›</button></div>`;
@@ -133,7 +133,7 @@
       });
       app.querySelector('#previousQuestion').onclick = () => previous && go(previous); app.querySelector('#nextQuestion').onclick = () => next && go(next);
       if(choice){app.querySelector('#submitQuestion').onclick=()=>{if(revealed){if(next)go(next);return;}const correct=sameKeys(selected,question.answerKeys);store(correct?'correct':'wrong',selected.join(','));revealed=true;drawNav();drawQuestion();};}
-      else if(!revealed){app.querySelector('#revealAnswer').onclick=()=>{const draft=app.querySelector('#selfAnswer').value,records=readRecords();records[question.id]={...(records[question.id]||{}),draft,status:records[question.id]?.status||'unmastered',updatedAt:Date.now()};saveRecords(records);revealed=true;drawNav();drawQuestion();};}
+      else if(!revealed){app.querySelector('#revealAnswer').onclick=()=>{const draft=app.querySelector('#selfAnswer').value,records=readRecords();records[question.id]={...(records[question.id]||{}),draft,status:records[question.id]?.status||'unmastered',updatedAt:Date.now()};saveRecords(records);window.PRACTICE_SYNC?.notifyRecord?.(question.id, records[question.id]);revealed=true;drawNav();drawQuestion();};}
       else{app.querySelector('#markMastered').onclick=()=>{store('mastered',record?.draft||'');drawNav();drawQuestion();};app.querySelector('#markUnmastered').onclick=()=>{store('unmastered',record?.draft||'');drawNav();drawQuestion();};}
       attachNoteEditor();
     }
@@ -141,6 +141,8 @@
     document.querySelector('#openQuestionNav').onclick = () => { drawer.hidden = false; document.body.classList.add('drawer-open'); };
     document.querySelector('#closeQuestionNav').onclick = () => { drawer.hidden = true; document.body.classList.remove('drawer-open'); };
     drawer.onclick = event => { if (event.target === drawer) { drawer.hidden = true; document.body.classList.remove('drawer-open'); } };
+    window.addEventListener('practice:records-merged', () => { drawNav(); drawQuestion(); });
+    window.addEventListener('practice:notes-merged', event => { if (event.detail?.questionId === question.id) drawQuestion(); });
     drawNav(); drawQuestion();
   }
   if(document.body.dataset.page === 'catalog') renderCatalog(); if(document.body.dataset.page === 'practice') renderPractice();
