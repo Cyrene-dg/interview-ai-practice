@@ -170,6 +170,16 @@ button,input,select,textarea{font:inherit}
 
 .plain-tag{background:#f0f3f7;color:#647086}
 
+.origin-badge{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid #c9e7dc;border-radius:99px;background:#f0fbf6;color:#177657;font-size:12px;font-weight:900}
+
+.question-origin{margin-top:16px;border:1px solid #e7eaf2;border-radius:10px;background:#fbfcff;color:#5d687b}
+
+.question-origin summary{padding:9px 12px;color:#58657a;font-size:13px;font-weight:850;cursor:pointer;user-select:none}
+
+.origin-details{padding:0 12px 12px;font-size:13px;line-height:1.65}
+
+.origin-details p{margin:5px 0}.origin-details a{display:inline-block;margin-top:5px;color:var(--brand);font-weight:850;text-decoration:none}
+
 .question-caption{margin:16px 0 4px;color:#566277;font-size:14px;font-weight:800}
 
 .question-head h1{margin:8px 0 0;font-size:21px;line-height:1.58;letter-spacing:-.2px}

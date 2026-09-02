@@ -73,6 +73,12 @@
 
   const course408 = bank.courses.find(course => course.key === '408');
   if (course408) {
+    // 同一知识点的题号只用于页面导航；按现有题在前、新导入题在后的顺序重新编号。
+    Object.entries(taxonomy).forEach(([group, topics]) => topics.forEach(topic => {
+      bank.questions
+        .filter(question => question.source === '408' && question.group === group && question.category === topic)
+        .forEach((question, index) => { question.order = index + 1; question.number = String(index + 1); });
+    }));
     course408.groups = Object.entries(taxonomy).map(([name, topics]) => ({
       name,
       count: bank.questions.filter(question => question.source === '408' && question.group === name).length,
