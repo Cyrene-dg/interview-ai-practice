@@ -42,9 +42,11 @@ button,input,select,textarea{font:inherit}
 
 .directory-parent b{color:#9ca5b5;font-size:15px;line-height:1;transition:transform .16s}
 
-.directory-parent.expanded b,.directory-parent.active b{transform:rotate(180deg)}
+.directory-parent.expanded b{transform:rotate(180deg)}
 
 .directory-children{display:grid;gap:2px;margin:0 0 5px 12px;padding-left:8px;border-left:1px solid #e5e2ff}
+
+.directory-children[hidden]{display:none}
 
 .directory-leaf{padding:8px 10px;font-size:14px}
 
