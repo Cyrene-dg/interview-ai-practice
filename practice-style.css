@@ -30,6 +30,24 @@ button,input,select,textarea{font:inherit}
 
 .course-list,.category-list{display:grid;gap:3px}
 
+.directory-group{display:grid;gap:2px}
+
+.directory-parent{display:flex;align-items:center;gap:8px;width:100%;padding:10px;border:0;border-radius:10px;background:transparent;color:#4c5870;font-weight:850;text-align:left;cursor:pointer}
+
+.directory-parent:hover{background:#fafaff}
+
+.directory-parent.active{color:var(--brand)}
+
+.directory-parent em{margin-left:auto;color:#9ca5b5;font-size:12px;font-style:normal;font-weight:400}
+
+.directory-parent b{color:#9ca5b5;font-size:15px;line-height:1;transition:transform .16s}
+
+.directory-parent.expanded b,.directory-parent.active b{transform:rotate(180deg)}
+
+.directory-children{display:grid;gap:2px;margin:0 0 5px 12px;padding-left:8px;border-left:1px solid #e5e2ff}
+
+.directory-leaf{padding:8px 10px;font-size:14px}
+
 .side-divider{height:1px;margin:18px 8px;background:var(--line)}
 
 .side-button{display:flex;justify-content:space-between;gap:8px;width:100%;padding:10px;border:0;border-radius:10px;background:transparent;color:#576277;text-align:left;cursor:pointer}
