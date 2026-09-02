@@ -83,6 +83,8 @@
   function renderPractice() {
     const question = bank.questions.find(item => item.id === params.get('q')) || bank.questions[0], course = bank.courses.find(item => item.name === question.source), siblings = categoryQuestions(course, question.category, question.group);
     const currentIndex = siblings.findIndex(item => item.id === question.id); let navPage = Math.floor(currentIndex / NAV_SIZE), selected = [], revealed = false;
+    const readFillDraft = () => { try { const value = JSON.parse(readRecords()[question.id]?.answer || '{}'); return value && typeof value === 'object' && !Array.isArray(value) ? value : {}; } catch (_) { return {}; } };
+    let fillAnswers = readFillDraft(), fillHintsVisible = false;
     const app = document.querySelector('#practiceApp'), navs = [document.querySelector('#practiceNav'), document.querySelector('#mobilePracticeNav')].filter(Boolean);
     let noteSaveTimer;
     document.querySelector('#backToCatalog').href = `practice-catalog.html?${new URLSearchParams({course:course.key, ...(question.group ? {group:question.group} : {}), category:question.category}).toString()}`;
@@ -90,6 +92,14 @@
     const sameKeys = (one, other) => one.length === other.length && one.every(key => other.includes(key));
     const recordFor = () => readRecords()[question.id];
     const store = (state, answer = '') => { const records = readRecords(); records[question.id] = {status:state,answer,updatedAt:Date.now()}; saveRecords(records); window.PRACTICE_SYNC?.notifyRecord?.(question.id, records[question.id]); };
+    const normalizeFillValue = value => String(value || '').trim().replace(/^\./, '').replace(/;$/, '').replace(/\s+/g, '');
+    const fillIsCorrect = blank => {
+      const entered = normalizeFillValue(fillAnswers[blank.id]);
+      return (blank.answers || []).some(answer => {
+        const accepted = normalizeFillValue(answer);
+        return entered === accepted || (!accepted.includes('(') && entered.replace(/\(\)$/, '') === accepted);
+      });
+    };
     function drawNav() {
       const records = readRecords(), navStart = navPage * NAV_SIZE, visible = siblings.slice(navStart, navStart + NAV_SIZE);
       const markup = `<div class="nav-top"><span class="tag">${escapeHtml(question.source)}${question.group ? ` / ${escapeHtml(question.group)}` : ''} / ${escapeHtml(question.category)}</span><h3>题号导航</h3><p>第 ${currentIndex + 1} / ${siblings.length} 题</p><form class="jump-form"><input inputmode="numeric" placeholder="题号"><button>跳转</button></form></div><div class="nav-grid">${visible.map(item => {const state=records[item.id]?.status||'';return `<button class="nav-item ${item.id === question.id ? 'current' : ''} ${state}" data-id="${escapeHtml(item.id)}">${escapeHtml(item.number)}</button>`;}).join('')}</div><div class="nav-pages"><button class="nav-previous" ${navPage === 0 ? 'disabled' : ''}>‹</button><span>${navPage + 1} / ${Math.ceil(siblings.length / NAV_SIZE)}</span><button class="nav-next" ${navStart + NAV_SIZE >= siblings.length ? 'disabled' : ''}>›</button></div>`;
@@ -102,6 +112,14 @@
       });
     }
     const showAnswer = record => `<section class="answer-box ${record?.status || ''}"><div class="answer-title">${record?.status === 'correct' ? '回答正确' : record?.status === 'wrong' ? '回答不正确' : '参考答案与解析'}</div><div class="answer-line"><b>参考答案：</b>${lineBreaks(question.answer || '题库没有提供参考答案。')}</div><div class="analysis"><b>完整解析</b><p>${lineBreaks(question.analysis || '题库没有提供解析。')}</p></div></section>`;
+    const showFillAnswer = formattedFill => {
+      const allCorrect = formattedFill.blanks.every(fillIsCorrect);
+      const rows = formattedFill.blanks.map(blank => {
+        const correct = fillIsCorrect(blank), entered = fillAnswers[blank.id] || '未填写', accepted = (blank.answers || []).join(' / ');
+        return `<li class="fill-result ${correct ? 'correct' : 'wrong'}"><b>${escapeHtml(blank.label || '')}</b><span>${correct ? '✓ 正确' : '× 参考：' + escapeHtml(accepted)}</span><code>${escapeHtml(entered)}</code></li>`;
+      }).join('');
+      return `<section class="answer-box ${allCorrect ? 'correct' : 'wrong'}"><div class="answer-title">${allCorrect ? '填空全部正确' : '填空结果'}</div><ul class="fill-results">${rows}</ul><div class="analysis"><b>完整解析</b><p>${lineBreaks(question.analysis || '题库没有提供解析。')}</p></div></section>${formattedFill.reference}`;
+    };
     function attachNoteEditor() {
       const noteArea = app.querySelector('#noteArea');
       if (!noteArea) return;
@@ -141,13 +159,15 @@
       }).catch(() => { state.textContent = '笔记库无法打开'; });
     }
     function drawQuestion() {
-      const record = recordFor(), choice = isChoice(question), formattedCode = window.PRACTICE_CODE_FORMAT?.format?.(question, escapeHtml), normalizedTitle = String(question.title || '').replace(/\s/g, ''), normalizedContent = String(question.content || '').replace(/\s/g, ''), title = !formattedCode && normalizedTitle && normalizedTitle !== normalizedContent ? `<div class="question-caption">${escapeHtml(question.title)}</div>` : '', displayContent = formattedCode ? formattedCode.prompt : question.content, previous = siblings[currentIndex-1], next = siblings[currentIndex+1];
+      const record = recordFor(), choice = isChoice(question), formattedFill = window.PRACTICE_CODE_FORMAT?.formatFill?.(question, escapeHtml), formattedCode = formattedFill || window.PRACTICE_CODE_FORMAT?.format?.(question, escapeHtml), normalizedTitle = String(question.title || '').replace(/\s/g, ''), normalizedContent = String(question.content || '').replace(/\s/g, ''), title = !formattedCode && normalizedTitle && normalizedTitle !== normalizedContent ? `<div class="question-caption">${escapeHtml(question.title)}</div>` : '', displayContent = formattedCode ? (formattedFill ? question.content : formattedCode.prompt) : question.content, previous = siblings[currentIndex-1], next = siblings[currentIndex+1];
       const origin = question.origin;
       const originBadge = origin?.label ? `<span class="origin-badge">${escapeHtml(origin.label)}</span>` : '';
       const originDetails = origin ? `<details class="question-origin"><summary>ⓘ 更多信息</summary><div class="origin-details"><p><b>来源公司：</b>${escapeHtml(origin.company || '未标注')}</p><p><b>可信度：</b>${escapeHtml(origin.confidence || '—')} · ${escapeHtml(originExplanation(origin.confidence))}</p><p><b>来源依据：</b>${escapeHtml(origin.basis || '未标注')}</p>${origin.url ? `<a href="${escapeHtml(origin.url)}" target="_blank" rel="noreferrer">查看公开来源 ↗</a>` : ''}</div></details>` : '';
-      const options = choice ? `<div class="options">${Object.entries(question.options).map(([key,value])=>`<button class="option ${selected.includes(key) ? 'selected' : ''}" data-option="${key}"><span>${key}</span><div>${lineBreaks(value)}</div></button>`).join('')}</div>` : `<div class="subjective-box"><label for="selfAnswer">先自己作答（内容只保存在这台设备）</label><textarea id="selfAnswer" placeholder="可以写下你的思路，或先在纸上作答后再查看参考答案。">${escapeHtml(record?.draft || '')}</textarea></div>`;
-      const mainAction = choice ? `<button id="submitQuestion" class="primary" ${selected.length ? '' : 'disabled'}>${revealed ? '下一题' : '提交答案'}</button>` : (revealed ? '<button id="markMastered" class="secondary">我掌握了</button><button id="markUnmastered" class="primary">加入待复习</button>' : '<button id="revealAnswer" class="primary">查看参考答案与解析</button>');
-      app.innerHTML = `<div class="question-head"><div class="crumb"><a href="${document.querySelector('#backToCatalog').href}">题库目录</a><i>/</i><span>${escapeHtml(question.source)}</span>${question.group ? `<i>/</i><span>${escapeHtml(question.group)}</span>` : ''}<i>/</i><span>${escapeHtml(question.category)}</span></div><div class="question-badges"><span class="tag">第 ${escapeHtml(question.number)} 题</span><span class="plain-tag">${escapeHtml(question.type)}</span>${originBadge}</div>${title}<h1>${lineBreaks(displayContent)}</h1>${formattedCode?.html || ''}${originDetails}</div>${options}<div id="answerArea">${revealed ? showAnswer(record) : ''}</div><div class="practice-actions"><button id="previousQuestion" class="secondary" ${previous ? '' : 'disabled'}>上一题</button><div>${mainAction}</div><button id="nextQuestion" class="secondary" ${next ? '' : 'disabled'}>下一题</button></div><div id="noteArea"></div>`;
+      const fillAllEntered = formattedFill?.blanks.every(blank => String(fillAnswers[blank.id] || '').trim()) || false;
+      const fillPanel = formattedFill ? `<section class="code-fill-panel"><div class="code-fill-panel-head"><span>依次填写 ${formattedFill.blanks.length} 个空；方法名不需要带前面的点。</span><button id="toggleFillHints" class="text-button" type="button">${fillHintsVisible ? '收起提示' : '查看提示'}</button></div><ol class="fill-hints" ${fillHintsVisible ? '' : 'hidden'}>${formattedFill.blanks.map(blank => `<li><b>${escapeHtml(blank.label || '')}</b>${escapeHtml(blank.hint || '')}</li>`).join('')}</ol></section>` : '';
+      const options = formattedFill ? fillPanel : choice ? `<div class="options">${Object.entries(question.options).map(([key,value])=>`<button class="option ${selected.includes(key) ? 'selected' : ''}" data-option="${key}"><span>${key}</span><div>${lineBreaks(value)}</div></button>`).join('')}</div>` : `<div class="subjective-box"><label for="selfAnswer">先自己作答（内容只保存在这台设备）</label><textarea id="selfAnswer" placeholder="可以写下你的思路，或先在纸上作答后再查看参考答案。">${escapeHtml(record?.draft || '')}</textarea></div>`;
+      const mainAction = formattedFill ? `<button id="submitCodeFill" class="primary" ${fillAllEntered ? '' : 'disabled'}>${revealed ? '下一题' : '提交填空'}</button>` : choice ? `<button id="submitQuestion" class="primary" ${selected.length ? '' : 'disabled'}>${revealed ? '下一题' : '提交答案'}</button>` : (revealed ? '<button id="markMastered" class="secondary">我掌握了</button><button id="markUnmastered" class="primary">加入待复习</button>' : '<button id="revealAnswer" class="primary">查看参考答案与解析</button>');
+      app.innerHTML = `<div class="question-head"><div class="crumb"><a href="${document.querySelector('#backToCatalog').href}">题库目录</a><i>/</i><span>${escapeHtml(question.source)}</span>${question.group ? `<i>/</i><span>${escapeHtml(question.group)}</span>` : ''}<i>/</i><span>${escapeHtml(question.category)}</span></div><div class="question-badges"><span class="tag">第 ${escapeHtml(question.number)} 题</span><span class="plain-tag">${escapeHtml(question.type)}</span>${originBadge}</div>${title}<h1>${lineBreaks(displayContent)}</h1>${formattedCode?.html || ''}${originDetails}</div>${options}<div id="answerArea">${revealed ? (formattedFill ? showFillAnswer(formattedFill) : showAnswer(record)) : ''}</div><div class="practice-actions"><button id="previousQuestion" class="secondary" ${previous ? '' : 'disabled'}>上一题</button><div>${mainAction}</div><button id="nextQuestion" class="secondary" ${next ? '' : 'disabled'}>下一题</button></div><div id="noteArea"></div>`;
       app.querySelectorAll('[data-option]').forEach(button => button.onclick = () => { if(revealed)return; const key=button.dataset.option, multiple=question.answerKeys.length>1||question.type.includes('多选'); selected=multiple?(selected.includes(key)?selected.filter(item=>item!==key):[...selected,key]):[key]; drawQuestion(); });
       app.querySelectorAll('.copy-code').forEach(button => button.onclick = async () => {
         const text = button.closest('.code-card').querySelector('.code-lines').innerText;
@@ -155,7 +175,24 @@
         setTimeout(() => { button.textContent = '复制代码'; }, 1300);
       });
       app.querySelector('#previousQuestion').onclick = () => previous && go(previous); app.querySelector('#nextQuestion').onclick = () => next && go(next);
-      if(choice){app.querySelector('#submitQuestion').onclick=()=>{if(revealed){if(next)go(next);return;}const correct=sameKeys(selected,question.answerKeys);store(correct?'correct':'wrong',selected.join(','));revealed=true;drawNav();drawQuestion();};}
+      if (formattedFill) {
+        app.querySelectorAll('[data-fill-id]').forEach(input => {
+          input.value = fillAnswers[input.dataset.fillId] || '';
+          input.disabled = revealed;
+          input.oninput = () => {
+            fillAnswers[input.dataset.fillId] = input.value;
+            app.querySelector('#submitCodeFill').disabled = !formattedFill.blanks.every(blank => String(fillAnswers[blank.id] || '').trim());
+          };
+        });
+        app.querySelector('#toggleFillHints').onclick = () => { fillHintsVisible = !fillHintsVisible; drawQuestion(); };
+        app.querySelector('#submitCodeFill').onclick = () => {
+          if (revealed) { if (next) go(next); return; }
+          const correct = formattedFill.blanks.every(fillIsCorrect);
+          store(correct ? 'correct' : 'wrong', JSON.stringify(fillAnswers));
+          revealed = true; drawNav(); drawQuestion();
+        };
+      }
+      else if(choice){app.querySelector('#submitQuestion').onclick=()=>{if(revealed){if(next)go(next);return;}const correct=sameKeys(selected,question.answerKeys);store(correct?'correct':'wrong',selected.join(','));revealed=true;drawNav();drawQuestion();};}
       else if(!revealed){app.querySelector('#revealAnswer').onclick=()=>{const draft=app.querySelector('#selfAnswer').value,records=readRecords();records[question.id]={...(records[question.id]||{}),draft,status:records[question.id]?.status||'unmastered',updatedAt:Date.now()};saveRecords(records);window.PRACTICE_SYNC?.notifyRecord?.(question.id, records[question.id]);revealed=true;drawNav();drawQuestion();};}
       else{app.querySelector('#markMastered').onclick=()=>{store('mastered',record?.draft||'');drawNav();drawQuestion();};app.querySelector('#markUnmastered').onclick=()=>{store('unmastered',record?.draft||'');drawNav();drawQuestion();};}
       attachNoteEditor();

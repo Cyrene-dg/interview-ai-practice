@@ -34,6 +34,8 @@
     sql: new Set('SELECT FROM WHERE AND OR INSERT INTO VALUES UPDATE SET DELETE CREATE TABLE ALTER DROP PRIMARY KEY UNIQUE KEY INDEX JOIN LEFT RIGHT INNER ON GROUP BY ORDER ASC DESC LIMIT ENGINE DEFAULT CHARSET NOT NULL AUTO_INCREMENT COMMENT'.split(' ')),
     c: new Set('int char void long short float double return if else for while do switch case break continue struct typedef const static unsigned signed main'.split(' '))
   };
+
+  const isWord = value => /[A-Za-z_]/.test(value || '');
   function highlighted(line, language, escape) {
     if (language === 'terminal') return escape(line);
     const keywords = keywordSets[language] || new Set();
@@ -91,6 +93,34 @@
       return `${'  '.repeat(indentation)}${line}`;
     });
   }
+  function renderCodeLines(lines, language, escape) {
+    return lines.map(line => `<li><code>${highlighted(line, language, escape) || ' '}</code></li>`).join('');
+  }
+  function formatFill(question, escape) {
+    const fill = question.codeFill;
+    if (!fill?.template || !Array.isArray(fill.blanks)) return null;
+    const language = fill.language || 'Java';
+    const blankMap = new Map(fill.blanks.map(blank => [String(blank.id), blank]));
+    const lines = formatStructuredCode(String(fill.template));
+    const lineHtml = lines.map(line => {
+      const parts = line.split(/(\[\[[A-Za-z0-9_-]+\]\])/g);
+      const html = parts.map(part => {
+        const match = /^\[\[([A-Za-z0-9_-]+)\]\]$/.exec(part);
+        if (!match) return highlighted(part, language.toLowerCase(), escape);
+        const blank = blankMap.get(match[1]);
+        if (!blank) return escape(part);
+        return `<input class="code-blank-input" data-fill-id="${escape(match[1])}" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${escape(blank.label || '填空')}" aria-label="填空 ${escape(blank.label || '')}">`;
+      }).join('');
+      return `<li><code>${html || ' '}</code></li>`;
+    }).join('');
+    const referenceLines = formatStructuredCode(String(fill.reference || fill.template));
+    const reference = `<details class="reference-code"><summary>查看完整参考代码</summary><figure class="code-card code-${escape(language.toLowerCase())}"><figcaption><span class="code-language">${escape(language)}</span><span class="code-caption">参考代码</span><button class="copy-code" type="button">复制代码</button></figcaption><div class="code-scroll"><ol class="code-lines">${renderCodeLines(referenceLines, language.toLowerCase(), escape)}</ol></div></figure></details>`;
+    return {
+      html: `<figure class="code-card code-fill-card code-${escape(language.toLowerCase())}"><figcaption><span class="code-language">${escape(language)}</span><span class="code-caption">题目代码 · 补全标有序号的空位</span><button class="copy-code" type="button">复制代码</button></figcaption><div class="code-scroll"><ol class="code-lines">${lineHtml}</ol></div></figure>`,
+      reference,
+      blanks: fill.blanks,
+    };
+  }
   function format(question, escape) {
     const spec = specs[question.id];
     if (!spec) return null;
@@ -100,14 +130,20 @@
     let endIndex = source.length, suffix = '';
     if (spec.end) {
       const markerIndex = source.indexOf(spec.end, startIndex);
-      if (markerIndex >= 0) { endIndex = markerIndex + 1; suffix = source.slice(markerIndex + 1).trim(); }
+      if (markerIndex >= 0) {
+        endIndex = markerIndex + 1;
+        suffix = source.slice(markerIndex + 1).trim();
+      }
     }
     const prompt = [source.slice(0, startIndex).trim(), suffix].filter(Boolean).join(' ');
     const code = source.slice(startIndex, endIndex).trim();
     if (!code) return null;
     const lines = ['java', 'c'].includes(spec.language) ? formatStructuredCode(code) : code.split('\n');
-    const lineHtml = lines.map(line => `<li><code>${highlighted(line, spec.language, escape) || ' '}</code></li>`).join('');
-    return { prompt, html: `<figure class="code-card code-${spec.language}"><figcaption><span class="code-language">${labels[spec.language]}</span><span class="code-caption">题目代码</span><button class="copy-code" type="button">复制代码</button></figcaption><div class="code-scroll"><ol class="code-lines">${lineHtml}</ol></div></figure>` };
+    const lineHtml = renderCodeLines(lines, spec.language, escape);
+    return {
+      prompt,
+      html: `<figure class="code-card code-${spec.language}"><figcaption><span class="code-language">${labels[spec.language]}</span><span class="code-caption">题目代码</span><button class="copy-code" type="button">复制代码</button></figcaption><div class="code-scroll"><ol class="code-lines">${lineHtml}</ol></div></figure>`
+    };
   }
-  window.PRACTICE_CODE_FORMAT = { format, specs };
+  window.PRACTICE_CODE_FORMAT = { format, formatFill, specs };
 })();
